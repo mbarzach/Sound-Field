@@ -1,0 +1,51 @@
+# Build artifacts
+Builds/
+build/
+
+# JUCE generated files
+JuceLibraryCode/
+
+# IDE files
+*.xcworkspace/
+*.xcuserdata/
+*.xcschemes/
+.vs/
+*.user
+*.suo
+*.ncb
+*.sdf
+*.opensdf
+
+# Compiled binaries
+*.vst3
+*.component
+*.app
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+*.o
+*.obj
+
+# Debug artifacts
+*.dSYM/
+*.pdb
+
+# macOS
+.DS_Store
+*.swp
+*~
+
+# Node modules (WebUI has its own .gitignore)
+WebUI/node_modules/
+
+# Temporary files
+*.tmp
+*.log
+build_and_notarize.sh
+
+# Distribution files
+dist/
+*.filtergraph
