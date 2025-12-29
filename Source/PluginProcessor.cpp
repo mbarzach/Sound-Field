@@ -64,7 +64,10 @@ void SoundFieldAudioProcessor::setCurrentProgram(int index) {
 }
 
 const juce::String SoundFieldAudioProcessor::getProgramName(int index) {
-  juce::ignoreUnused(index);
+  if (index == 0) {
+    return "Default";
+  }
+
   return {};
 }
 
