@@ -261,7 +261,7 @@ void SoundFieldAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     float mid = (dryLeft + dryRight) * 0.5f;
     float side = (dryLeft - dryRight) * 0.5f;
 
-    // Expansion (stereo width)
+    // Expansion (stereo width) - M/S width control
     // Map -100..100 to 0.0..2.0
     float expansionFactor = 1.0f + (expansion / 100.0f);
     side *= expansionFactor;

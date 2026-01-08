@@ -1,6 +1,6 @@
 import { Knob } from './Knob';
 
-type BlobMode = 'blob' | 'entity';
+type BlobMode = 'field' | 'blob' | 'entity';
 
 interface AudioData {
     inputL: number;
@@ -106,6 +106,12 @@ export function ImmersiveControls({
                     </div>
                     <div className="header-center">
                         <div className="mode-toggle">
+                            <button
+                                className={`mode-btn ${blobMode === 'field' ? 'active' : ''}`}
+                                onClick={() => onBlobModeChange('field')}
+                            >
+                                FIELD
+                            </button>
                             <button
                                 className={`mode-btn ${blobMode === 'blob' ? 'active' : ''}`}
                                 onClick={() => onBlobModeChange('blob')}

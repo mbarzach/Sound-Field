@@ -566,3 +566,184 @@ body {
     padding: 12px 16px 16px;
     border-top: 1px solid var(--glass-border);
 }
+
+/* Particle Tuning Panel */
+.tuning-panel {
+    position: absolute;
+    bottom: 100px;
+    left: 24px;
+    z-index: 50;
+    max-width: 280px;
+}
+
+.tuning-toggle {
+    padding: 8px 16px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: var(--text-secondary);
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tuning-toggle:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tuning-panel.open .tuning-toggle {
+    border-radius: 12px 12px 0 0;
+    border-bottom: none;
+}
+
+.tuning-content {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-top: none;
+    border-radius: 0 12px 12px 12px;
+    padding: 12px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.tuning-content::-webkit-scrollbar {
+    width: 4px;
+}
+
+.tuning-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.tuning-content::-webkit-scrollbar-thumb {
+    background: var(--glass-border);
+    border-radius: 2px;
+}
+
+.tuning-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.tuning-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--text-primary);
+}
+
+.tuning-header-buttons {
+    display: flex;
+    gap: 6px;
+}
+
+.tuning-copy,
+.tuning-reset {
+    padding: 4px 10px;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    background: transparent;
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tuning-copy:hover,
+.tuning-reset:hover {
+    color: var(--text-primary);
+    border-color: var(--text-secondary);
+}
+
+.tuning-section {
+    margin-bottom: 12px;
+}
+
+.tuning-section:last-child {
+    margin-bottom: 0;
+}
+
+.tuning-section-title {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.tuning-slider {
+    margin-bottom: 8px;
+}
+
+.tuning-slider:last-child {
+    margin-bottom: 0;
+}
+
+.tuning-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.tuning-name {
+    font-size: 10px;
+    color: var(--text-secondary);
+}
+
+.tuning-value {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.tuning-input {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+}
+
+.tuning-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 0 8px var(--accent-glow);
+    transition: transform 0.15s ease;
+}
+
+.tuning-input::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.tuning-input::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 0 8px var(--accent-glow);
+}

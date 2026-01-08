@@ -4,9 +4,15 @@ Created by Michael Barzach
 
 A creative audio visualizer plugin built with JUCE 8's WebView integration. The UI is a React + Three.js app running inside a native VST3/AU plugin.
 
-The plugin has controls for stereo width and saturation, but the main focus here is the visualization: two reactive 3D modes that respond to the audio signal in real-time.
+The plugin has controls for stereo width and saturation, but the main focus here is the visualization: three reactive 3D modes that respond to the audio signal in real-time.
 
 ## Visualization Modes
+
+### Particle Field
+
+![Particle Field Visualization](GIF/particle_field.gif)
+
+A procedural particle system with 13,000+ points organized into 32 frequency-band columns. This mode can be thought of as an A-weighted particle "FFT". Each column responds independently to its spectral bin, creating an FFT-style visualization where particle height and turbulence reflect audio energy. The expansion parameter widens the field, excitation increases movement sensitivity, and mix blends between calm drift and full audio reactivity. See `ParticleField.tsx`.
 
 ### Dual Blob
 
@@ -20,7 +26,7 @@ Two layered blobs representing dry and wet signals. Vertices are displaced based
 
 A sphere with a solid core and transparent outer aura. The surface is deformed using 3D simplex noise, with displacement driven by spectral energy. The aura uses additive blending and responds to the mix parameter. Fresnel shading adds the rim glow effect. See `EntityBlob.tsx` and `entityShaders.ts`.
 
-Both modes use `@react-three/fiber` and custom GLSL shaders.
+All visualization modes use `@react-three/fiber` and custom GLSL shaders.
 
 ## Why WebView?
 
@@ -28,7 +34,7 @@ JUCE 8's `WebBrowserComponent` lets you use the web stack for plugin UIs. This p
 
 ## Audio Processing
 
-**Expansion** adjusts stereo width using M/S processing. The side signal gets scaled by the expansion amount.
+**Expansion** adjusts stereo width using M/S processing. Positive values widen stereo content by amplifying the side signal. Negative values narrow the stereo field toward mono, collapsing any L/R difference.
 
 **Excitation** adds saturation using an asymmetric waveshaper that generates even harmonics. See `PluginProcessor.cpp`.
 
@@ -53,12 +59,14 @@ export function useJuceSlider(id: string, defaultValue: number) {
     }, [id]);
 
     const setValueFromUI = (newValue: number) => {
-        window.__JUCE__.getSliderState(id)?.setScaledValue(newValue);
+        window.__JUCE__.backend.emitEvent(id, { value: newValue });
     };
 
     return [value, setValueFromUI];
 }
 ```
+
+The C++ side needs `.withEventListener()` to receive these events and update the APVTS parameter.
 
 ## Project Structure
 
@@ -68,12 +76,16 @@ export function useJuceSlider(id: string, defaultValue: number) {
 
 **React (WebUI/src/)**
 - `App.tsx` - main component, canvas setup
-- `components/DualBlob.tsx` - primary visualization
-- `components/EntityBlob.tsx` - alternative visualization
+- `components/DualBlob.tsx` - dual blob visualization
+- `components/EntityBlob.tsx` - entity visualization
+- `components/ParticleField.tsx` - particle field visualization
 - `components/ImmersiveControls.tsx` - knobs, meters
 - `hooks/useJuceEvents.ts` - JUCE backend communication
 - `shaders/dualBlobShaders.ts` - GLSL for dual blob
-- `constants/entityShaders.ts` - GLSL for entity
+- `shaders/particleFieldShaders.ts` - GLSL for particle field
+- `shaders/entityShaders.ts` - GLSL for entity
+- `utils/noise.ts` - 3D simplex noise for deformation
+- `utils/spectralInterpolation.ts` - frequency band interpolation
 
 ## Building
 

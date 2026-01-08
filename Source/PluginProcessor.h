@@ -89,8 +89,5 @@ private:
 
   void calculateBandpassCoeffs(int bandIndex, double sampleRate);
 
-  // Flag to force bypass OFF on first processBlock
-  bool firstBlockProcessed = false;
-
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SoundFieldAudioProcessor)
 };

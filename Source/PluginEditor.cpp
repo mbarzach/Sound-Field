@@ -45,7 +45,7 @@ std::optional<juce::WebBrowserComponent::Resource> getResource(const juce::Strin
     return std::nullopt;
 }
 
-} // anonymous namespace
+}
 
 SoundFieldAudioProcessorEditor::SoundFieldAudioProcessorEditor(
     SoundFieldAudioProcessor &p)
@@ -64,7 +64,29 @@ SoundFieldAudioProcessorEditor::SoundFieldAudioProcessorEditor(
                   .withOptionsFrom(outputGainRelay)
                   .withOptionsFrom(inputGainRelay)
                   .withOptionsFrom(colorThemeRelay)
-                  .withOptionsFrom(bypassRelay)) {
+                  .withOptionsFrom(bypassRelay)
+                  // Event listeners for JavaScript → C++ parameter updates
+                  .withEventListener("expansion", [this](const juce::var& data) {
+                      handleSliderEvent("expansion", data);
+                  })
+                  .withEventListener("excitation", [this](const juce::var& data) {
+                      handleSliderEvent("excitation", data);
+                  })
+                  .withEventListener("mix", [this](const juce::var& data) {
+                      handleSliderEvent("mix", data);
+                  })
+                  .withEventListener("inputGain", [this](const juce::var& data) {
+                      handleSliderEvent("inputGain", data);
+                  })
+                  .withEventListener("outputGain", [this](const juce::var& data) {
+                      handleSliderEvent("outputGain", data);
+                  })
+                  .withEventListener("colorTheme", [this](const juce::var& data) {
+                      handleSliderEvent("colorTheme", data);
+                  })
+                  .withEventListener("bypass", [this](const juce::var& data) {
+                      handleToggleEvent("bypass", data);
+                  })) {
   expansionAttachment = std::make_unique<juce::WebSliderParameterAttachment>(
       *audioProcessor.apvts.getParameter("expansion"), expansionRelay, nullptr);
 
@@ -125,6 +147,28 @@ void SoundFieldAudioProcessorEditor::timerCallback() {
 
     // Start the data update timer at 15Hz
     startTimerHz(15);
+
+    // Broadcast initial parameter values to frontend after WebView loads
+    juce::Timer::callAfterDelay(300, [this]() {
+      auto emitParam = [this](const juce::String& id, float value) {
+        juce::DynamicObject::Ptr obj = new juce::DynamicObject();
+        obj->setProperty("scaledValue", value);
+        browser.emitEventIfBrowserIsVisible(id, juce::var(obj.get()));
+      };
+
+      emitParam("expansion", audioProcessor.apvts.getRawParameterValue("expansion")->load());
+      emitParam("excitation", audioProcessor.apvts.getRawParameterValue("excitation")->load());
+      emitParam("mix", audioProcessor.apvts.getRawParameterValue("mix")->load());
+      emitParam("inputGain", audioProcessor.apvts.getRawParameterValue("inputGain")->load());
+      emitParam("outputGain", audioProcessor.apvts.getRawParameterValue("outputGain")->load());
+      emitParam("colorTheme", static_cast<float>(audioProcessor.apvts.getRawParameterValue("colorTheme")->load()));
+
+      // Bypass uses different format
+      juce::DynamicObject::Ptr bypassObj = new juce::DynamicObject();
+      bypassObj->setProperty("value", audioProcessor.apvts.getRawParameterValue("bypass")->load() > 0.5f);
+      browser.emitEventIfBrowserIsVisible("bypass", juce::var(bypassObj.get()));
+    });
+
     return;
   }
 
@@ -157,4 +201,25 @@ void SoundFieldAudioProcessorEditor::timerCallback() {
       audioProcessor.apvts.getRawParameterValue("bypass")->load() > 0.5f);
 
   browser.emitEventIfBrowserIsVisible("audioAnalysis", juce::var(data.get()));
+}
+
+void SoundFieldAudioProcessorEditor::handleSliderEvent(const juce::String& id, const juce::var& data) {
+    if (!data.hasProperty("value")) return;
+
+    float value = static_cast<float>(data["value"]);
+
+    if (auto* param = audioProcessor.apvts.getParameter(id)) {
+        float normalizedValue = param->convertTo0to1(value);
+        param->setValueNotifyingHost(normalizedValue);
+    }
+}
+
+void SoundFieldAudioProcessorEditor::handleToggleEvent(const juce::String& id, const juce::var& data) {
+    if (!data.hasProperty("value")) return;
+
+    bool value = static_cast<bool>(data["value"]);
+
+    if (auto* param = audioProcessor.apvts.getParameter(id)) {
+        param->setValueNotifyingHost(value ? 1.0f : 0.0f);
+    }
 }

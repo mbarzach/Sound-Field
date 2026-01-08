@@ -36,9 +36,11 @@ export function Knob({ value, min, max, label, unit = '', onChange }: KnobProps)
 
     if (label === 'EXPANSION' || label === 'EXCITATION' || label === 'MIX') {
         displayValue = value.toFixed(0);
+        if (displayValue === '-0') displayValue = '0';
         displayUnit = '%';
     } else if (label === 'INPUT' || label === 'OUTPUT') {
         displayValue = (value > 0 ? '+' : '') + value.toFixed(1);
+        if (displayValue === '-0.0') displayValue = '0.0';
         displayUnit = 'dB';
     } else {
         displayValue = (value * 100).toFixed(0);

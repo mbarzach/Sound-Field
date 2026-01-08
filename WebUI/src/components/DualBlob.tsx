@@ -62,8 +62,7 @@ export function DualBlob({
     }, [spectralBands]);
 
     useFrame(({ clock }) => {
-        // High reactivity like an oscilloscope - fast response to all changes
-        const audioSmoothing = 0.7;  // Fast for audio data
+        const audioSmoothing = 0.4;  // Balanced between responsive and smooth
         const uiSmoothing = 0.15;    // Slower for UI transitions
         const time = clock.getElapsedTime();
         const rawBands = spectralBandsRef.current;

@@ -1,14 +1,31 @@
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import { DualBlob } from './components/DualBlob';
 import EntityBlob from './components/EntityBlob';
+import ParticleField, { DEFAULT_TUNING } from './components/ParticleField';
+import type { TuningParams } from './components/ParticleField';
+// import { ParticleTuning } from './components/ParticleTuning'; // Hidden - see tuning menu comment below
 import { ImmersiveControls } from './components/ImmersiveControls';
 import { useJuceAudioAnalysis, useJuceSlider, useJuceToggle } from './hooks/useJuceEvents';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import './App.css';
 
-type BlobMode = 'blob' | 'entity';
+// Resets camera to fixed position when in field mode
+function CameraReset({ active }: { active: boolean }) {
+    const { camera } = useThree();
+
+    useEffect(() => {
+        if (active) {
+            camera.position.set(0, 0, 5);
+            camera.lookAt(0, 0, 0);
+        }
+    }, [active, camera]);
+
+    return null;
+}
+
+type BlobMode = 'field' | 'blob' | 'entity';
 
 function App() {
     const audioData = useJuceAudioAnalysis();
@@ -21,7 +38,8 @@ function App() {
     const [outputGain, setOutputGain] = useJuceSlider('outputGain', 0.0);
     const [bypass, setBypass] = useJuceToggle('bypass', false);
 
-    const [blobMode, setBlobMode] = useState<BlobMode>('blob');
+    const [blobMode, setBlobMode] = useState<BlobMode>('field');
+    const [particleTuning] = useState<TuningParams>(DEFAULT_TUNING); // setParticleTuning hidden with tuning menu
 
     // Entity mode parameters derived from audio analysis
     const entityDeformIntensity = useMemo(() => {
@@ -100,11 +118,25 @@ function App() {
                     style={{ width: 800, height: 600 }}
                 >
                     <color attach="background" args={['#050508']} />
+                    <CameraReset active={blobMode === 'field'} />
                     <ambientLight intensity={0.4} />
                     <pointLight position={[10, 10, 10]} intensity={0.8} />
                     <pointLight position={[-10, -10, -10]} intensity={0.3} color="#4060ff" />
 
-                    {blobMode === 'blob' ? (
+                    {blobMode === 'field' ? (
+                        <ParticleField
+                            dryRms={audioData.dryRms}
+                            wetRms={audioData.wetRms}
+                            dryWidth={audioData.dryWidth}
+                            wetWidth={audioData.wetWidth}
+                            spectralBands={audioData.spectralBands || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}
+                            expansion={expansion}
+                            excitation={excitation}
+                            mix={mix}
+                            bypass={bypass}
+                            tuning={particleTuning}
+                        />
+                    ) : blobMode === 'blob' ? (
                         <DualBlob
                             dryRms={audioData.dryRms}
                             wetRms={audioData.wetRms}
@@ -133,14 +165,16 @@ function App() {
                         />
                     )}
 
-                    <OrbitControls
-                        enableZoom={false}
-                        enablePan={false}
-                        autoRotate
-                        autoRotateSpeed={0.3}
-                        minPolarAngle={Math.PI / 3}
-                        maxPolarAngle={Math.PI * 2 / 3}
-                    />
+                    {blobMode !== 'field' && (
+                        <OrbitControls
+                            enableZoom={false}
+                            enablePan={false}
+                            autoRotate
+                            autoRotateSpeed={0.3}
+                            minPolarAngle={Math.PI / 3}
+                            maxPolarAngle={Math.PI * 2 / 3}
+                        />
+                    )}
 
                     {blobMode === 'entity' && (
                         <EffectComposer>
@@ -171,6 +205,15 @@ function App() {
                 blobMode={blobMode}
                 onBlobModeChange={setBlobMode}
             />
+
+            {/* Tuning menu hidden from UI - uncomment to reveal for tuning particle design and reactivity
+            {blobMode === 'field' && (
+                <ParticleTuning
+                    tuning={particleTuning}
+                    onTuningChange={setParticleTuning}
+                />
+            )}
+            */}
         </div>
     );
 }

@@ -15,6 +15,10 @@ public:
 private:
   void timerCallback() override;
 
+  // Event handlers for JavaScript → C++ parameter updates
+  void handleSliderEvent(const juce::String& id, const juce::var& data);
+  void handleToggleEvent(const juce::String& id, const juce::var& data);
+
   SoundFieldAudioProcessor &audioProcessor;
 
   juce::WebSliderRelay expansionRelay;

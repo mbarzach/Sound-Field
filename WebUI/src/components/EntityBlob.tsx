@@ -2,7 +2,7 @@ import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Stars } from '@react-three/drei';
 import { ShaderMaterial, DoubleSide, Group, AdditiveBlending } from 'three';
-import { ENTITY_VERTEX_SHADER, ENTITY_FRAGMENT_SHADER } from '../constants/entityShaders';
+import { ENTITY_VERTEX_SHADER, ENTITY_FRAGMENT_SHADER } from '../shaders/entityShaders';
 
 interface EntityBlobProps {
     wetRms: number;
@@ -35,7 +35,8 @@ function EntityBlob({
         rms: 0,
         bands: new Array(10).fill(0),
         tension: 1.5,
-        deformScale: 0.1
+        deformScale: 0.1,
+        bypassAmount: 0
     });
 
     const coreUniforms = useMemo(() => ({
@@ -64,7 +65,7 @@ function EntityBlob({
 
     useFrame((state, delta) => {
         const time = state.clock.getElapsedTime();
-        const audioSmoothing = 0.7;  // Fast for audio data (oscilloscope-like)
+        const audioSmoothing = 0.4;  // Balanced between responsive and smooth
         const uiSmoothing = 0.15;    // Slower for UI transitions
         const smoothed = smoothedRef.current;
 
@@ -78,8 +79,10 @@ function EntityBlob({
 
         smoothed.tension += (tension - smoothed.tension) * audioSmoothing;
         smoothed.deformScale += (deformScale - smoothed.deformScale) * uiSmoothing;
+        smoothed.bypassAmount += ((bypass ? 1 : 0) - smoothed.bypassAmount) * uiSmoothing;
 
         const energy = smoothed.bands.reduce((a, b) => a + b, 0) / 10;
+        const bypassBlend = smoothed.bypassAmount;
 
         if (groupRef.current) {
             const rotationSpeed = 0.03 + energy * 0.1;
@@ -87,8 +90,9 @@ function EntityBlob({
         }
 
         const audioKick = energy * drive * 0.8;
-        const totalDeform = bypass ? 0.05 : smoothed.deformScale + audioKick;
-        const effectiveMix = bypass ? 0 : mix;
+        const activeDeform = smoothed.deformScale + audioKick;
+        const totalDeform = activeDeform * (1 - bypassBlend) + 0.05 * bypassBlend;
+        const effectiveMix = mix * (1 - bypassBlend);
 
         if (coreMaterialRef.current) {
             const u = coreMaterialRef.current.uniforms;
@@ -98,7 +102,7 @@ function EntityBlob({
             u.uBands.value = smoothed.bands;
             u.uDeformScale.value = deformScale;
             u.uDeformIntensity.value = deformIntensity;
-            u.uOpacity.value = bypass ? 0.3 : 1.0;
+            u.uOpacity.value = 1.0 * (1 - bypassBlend) + 0.3 * bypassBlend;
         }
 
         if (auraMaterialRef.current) {

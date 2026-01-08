@@ -7,24 +7,6 @@ declare global {
                 addEventListener: (event: string, callback: (data: unknown) => void) => () => void;
                 emitEvent: (event: string, data: unknown) => void;
             };
-            initialisationData?: {
-                [key: string]: {
-                    properties?: {
-                        scaledValue?: number;
-                        value?: number;
-                    };
-                };
-            };
-            getSliderState?: (id: string) => {
-                getScaledValue: () => number;
-                getValue: () => number;
-                setScaledValue: (value: number) => void;
-                setValue: (value: number) => void;
-            };
-            getToggleState?: (id: string) => {
-                getValue: () => boolean;
-                setValue: (value: boolean) => void;
-            };
         };
     }
 }
@@ -61,6 +43,7 @@ const defaultAudioData: AudioAnalysisData = {
     cppBypass: false
 };
 
+/** Subscribe to high-frequency audio analysis data from C++ */
 export function useJuceAudioAnalysis(): AudioAnalysisData {
     const [data, setData] = useState<AudioAnalysisData>(defaultAudioData);
 
@@ -79,23 +62,12 @@ export function useJuceAudioAnalysis(): AudioAnalysisData {
     return data;
 }
 
+/** Bidirectional binding for WebSliderRelay parameters */
 export function useJuceSlider(id: string, defaultValue: number = 0): [number, (value: number) => void] {
-    const [value, setValue] = useState<number>(() => {
-        const initData = window.__JUCE__?.initialisationData?.[id];
-        return initData?.properties?.scaledValue ?? defaultValue;
-    });
-
+    const [value, setValue] = useState<number>(defaultValue);
     const isUpdatingFromJuce = useRef(false);
 
     useEffect(() => {
-        // Sync on mount in case initial data was stale
-        if (window.__JUCE__?.getSliderState) {
-            try {
-                const state = window.__JUCE__.getSliderState(id);
-                if (state) setValue(state.getScaledValue());
-            } catch { /* ignore */ }
-        }
-
         const backend = window.__JUCE__?.backend;
         if (!backend?.addEventListener) return;
 
@@ -115,16 +87,13 @@ export function useJuceSlider(id: string, defaultValue: number = 0): [number, (v
         setValue(newValue);
         if (isUpdatingFromJuce.current) return;
 
-        if (window.__JUCE__?.getSliderState) {
-            window.__JUCE__.getSliderState(id)?.setScaledValue(newValue);
-        } else if (window.__JUCE__?.backend) {
-            window.__JUCE__.backend.emitEvent(id, { value: newValue });
-        }
+        window.__JUCE__?.backend?.emitEvent(id, { value: newValue });
     }, [id]);
 
     return [value, setValueFromUI];
 }
 
+/** Bidirectional binding for WebToggleButtonRelay parameters */
 export function useJuceToggle(id: string, defaultValue: boolean = false): [boolean, (value: boolean) => void] {
     const [value, setValue] = useState<boolean>(defaultValue);
     const isUpdatingFromJuce = useRef(false);
@@ -149,11 +118,7 @@ export function useJuceToggle(id: string, defaultValue: boolean = false): [boole
         setValue(newValue);
         if (isUpdatingFromJuce.current) return;
 
-        if (window.__JUCE__?.getToggleState) {
-            window.__JUCE__.getToggleState(id)?.setValue(newValue);
-        } else if (window.__JUCE__?.backend) {
-            window.__JUCE__.backend.emitEvent(id, { value: newValue });
-        }
+        window.__JUCE__?.backend?.emitEvent(id, { value: newValue });
     }, [id]);
 
     return [value, setValueFromUI];
